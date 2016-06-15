@@ -1,0 +1,79 @@
+<ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+		xsi:noNamespaceSchemaLocation="ehcache.xsd">
+         
+	<!-- 指定写入硬盘时的存储目录 -->
+    <diskStore path="S:\WebServers\cache\hibernate\tmpdir" />
+    
+    <defaultCache
+        maxElementsInMemory="10000"
+        eternal="false"
+        timeToIdleSeconds="120"
+        timeToLiveSeconds="120"
+        overflowToDisk="true"
+        maxElementsOnDisk="10000000"
+        diskPersistent="false"
+        diskExpiryThreadIntervalSeconds="120"
+        memoryStoreEvictionPolicy="LRU"
+        />
+    
+    <!-- hibernate cache -->
+    
+    <cache name="org.hibernate.cache.spi.UpdateTimestampsCache"
+      maxElementsInMemory="5000" 
+      eternal="true" 
+      overflowToDisk="true" 
+      />
+      
+    <cache name="org.hibernate.cache.internal.StandardQueryCache"
+      maxElementsInMemory="10000" 
+      eternal="false" 
+      timeToLiveSeconds="120"
+      overflowToDisk="true" 
+      />
+      
+    <cache name="com.flight.trs.model.entity.AircraftType"
+      maxElementsInMemory="10000" 
+      eternal="false" 
+      timeToLiveSeconds="120"
+      overflowToDisk="true" 
+      />
+    <cache name="com.flight.trs.model.entity.Airport"
+      maxElementsInMemory="10000" 
+      eternal="false" 
+      timeToLiveSeconds="120"
+      overflowToDisk="true" 
+      />
+    <cache name="com.flight.trs.model.entity.Carrier"
+      maxElementsInMemory="10000" 
+      eternal="false" 
+      timeToLiveSeconds="120"
+      overflowToDisk="true" 
+      />
+    <cache name="com.flight.trs.model.entity.PassengerGauge"
+      maxElementsInMemory="10000" 
+      eternal="false" 
+      timeToLiveSeconds="120"
+      overflowToDisk="true" 
+      />
+    <cache name="com.flight.trs.model.entity.Carrier.passengerGauges"
+      maxElementsInMemory="10000" 
+      eternal="false" 
+      timeToLiveSeconds="120"
+      overflowToDisk="true" 
+      />
+      
+    <cache name="com.flight.trs.model.entity.Segment"
+      maxElementsInMemory="10000" 
+      eternal="false" 
+      timeToLiveSeconds="120"
+      overflowToDisk="true" 
+      />
+      
+    <cache name="freightRateCache"
+	    maxElementsInMemory="10000" 
+	    eternal="true"
+	    timeToLiveSeconds="120"
+	    overflowToDisk="true" 
+    />
+      
+</ehcache>

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xmlns:context="http://www.springframework.org/schema/context" 
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:cache="http://www.springframework.org/schema/cache" 
+    xmlns:p="http://www.springframework.org/schema/p"
+    xsi:schemaLocation="
+    	http://www.springframework.org/schema/beans 
+       	http://www.springframework.org/schema/beans/spring-beans.xsd
+       	http://www.springframework.org/schema/cache
+       	http://www.springframework.org/schema/cache/spring-cache.xsd"
+       	>
+       	
+    <description>Shiro Configuration</description>
+    
+    
+	<!-- EhCache library setup -->
+	<bean id="ehCacheManagerFactory" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean" 
+		p:config-location="classpath:ehcache-shiro.xml" 
+		p:shared="true"/>
+    
+    <bean id="ehcacheManager" class="org.springframework.cache.ehcache.EhCacheCacheManager" 
+    	p:cache-manager-ref="ehCacheManagerFactory"/>
+    	
+    <!-- 启动缓存注解 -->
+	<cache:annotation-driven cache-manager ="ehcacheManager"/>
+    
+    <!-- 缓存管理器 使用Ehcache实现 -->
+  	<bean id="cacheManager4shiro" class="org.apache.shiro.cache.ehcache.EhCacheManager"
+  		p:cache-manager-ref="ehCacheManagerFactory"/>
+    	<!--<property name="cacheManagerConfigFile" value="classpath:ehcache-shiro.xml"/>-->
+  	
+  	<!-- 凭证匹配器 -->
+  	<bean id="credentialsMatcher"
+      	class="com.flight.trs.security.authc.credential.HashedCredentialsMatcher">
+    	<property name="hashAlgorithmName" value="MD5"/>
+  	</bean>
+    
+    <bean id="customerAuthzRealm" class="com.flight.trs.security.realm.CustomerAuthzRealm">
+    	
+    	
+    	<property name="credentialsMatcher" ref="credentialsMatcher"/>
+    	<property name="cacheManager" ref="cacheManager4shiro"/>
+    	
+    	<!-- 缓存设置 -->
+    	<property name="cachingEnabled" value="true"/>
+    	<!-- 不存储认证信息 -->
+    	<property name="authenticationCachingEnabled" value="false"/>
+    	<property name="authorizationCachingEnabled" value="true"/>
+    	<property name="authorizationCacheName" value="authorizationCache"/>
+    </bean>
+    
+    <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+    	<property name="realm" ref="customerAuthzRealm" />
+    </bean>
+    
+    <bean id="loginFilter"   
+		class="com.flight.trs.security.filter.LoginFilter">
+	    <property name="loginUrl" value="/login"/>  
+	    <property name="successUrl" value="/"/> 
+	</bean> 
+    
+    <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+        <property name="securityManager" ref="securityManager"/>
+        <!--  property name="loginUrl" value="/jsps/customer/login.jsp" />
+        <property name="successUrl" value="/" />-->
+        <property name="unauthorizedUrl" value="/unauthorized"/>
+        <property name="filters">  
+	        <map>  
+	            <entry key="authc" value-ref="loginFilter"/>  
+	        </map>  
+	    </property>
+        <property name="filterChainDefinitions">
+            <value>
+            	/inner/login** = anon
+            	/inner/logout** = anon
+            	/login = authc
+            	/orderform/** = authc
+            	/test = authc
+            	/logout = logout
+            	/airport/sorted = anon
+            	/ticket/book = authc
+                /resources/** = anon
+                /admin/** = roles[admin]
+            	/emp/** = roles[emp]
+            	/cust/** = roles[cust]
+            </value>
+        </property>
+    </bean>
+    
+    <!-- 保证实现了Shiro内部lifecycle函数的bean执行 -->
+    <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor" />
+   
+</beans>

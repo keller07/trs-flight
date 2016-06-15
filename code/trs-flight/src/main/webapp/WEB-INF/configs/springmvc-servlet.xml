@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"     
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:mvc="http://www.springframework.org/schema/mvc"     
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/mvc
+		http://www.springframework.org/schema/mvc/spring-mvc.xsd"
+		>
+
+	<!-- 启用Spring基于annotation的DI-->
+	<context:annotation-config />
+
+    <context:component-scan base-package="com.flight.trs.controller">
+    	<context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+
+	<!-- 扩充注解驱动，可以将请求参数绑定到控制器参数 -->
+	<mvc:annotation-driven />
+
+	<!-- 开启Shiro的注解，实现对Controller的方法级权限检查(如@RequiresRoles,@RequiresPermissions),需借助SpringAOP扫描使用Shiro注解的类,并在必要时进行安全逻辑验证 -->  
+    <!-- 配置以下两个bean即可实现此功能, 应该放在spring-mvc.xml中 -->  
+    <!-- Enable Shiro Annotations for Spring-configured beans. Only run after the lifecycleBeanProcessor has run -->  
+    <bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator" depends-on="lifecycleBeanPostProcessor"> 
+        <property name="proxyTargetClass" value="true"/>
+    </bean>
+    <bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">
+        <property name="securityManager" ref="securityManager"/>
+	</bean>
+
+	<!-- 静态资源访问处理，不通过控制器处理 -->
+	<mvc:resources mapping="/resources/**" location="/resources/"/>
+  	<mvc:default-servlet-handler/>
+
+
+	<bean id="cnManager" class="org.springframework.web.accept.ContentNegotiationManagerFactoryBean">
+		<property name="favorParameter" value="true" />
+		<property name="favorPathExtension" value="true"/>
+  		<property name="parameterName" value="format" />
+  		<property name="ignoreAcceptHeader" value="false" />
+  		<property name="mediaTypes">
+  			<map>
+  				<entry key="json" value="application/json" />
+  				<entry key="xml" value="application/xml" />
+    			<entry key="htm" value="text/html" />
+  			</map>
+  		</property>
+	</bean>
+
+    <!--视图解析器-->
+    <bean id="cnViewResolver" class="org.springframework.web.servlet.view.ContentNegotiatingViewResolver">
+    	<property name="order" value="1" />
+    	<property name="contentNegotiationManager" ref="cnManager"/>
+    	<property name="defaultViews">
+			<list>
+				<!-- JSON View -->
+				<bean id="jsonView" class="org.springframework.web.servlet.view.json.MappingJackson2JsonView" />
+			</list>    	
+    	</property>
+    	<property name="viewResolvers">
+    		<list>
+    			<!-- If no extension matched, use JSP view -->
+    			<bean id="irViewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver"> 
+    				<property name="viewClass" value="org.springframework.web.servlet.view.JstlView" />
+    				<property name="prefix" value="/WEB-INF/jsps/" /> 
+   					<property name="suffix" value=".jsp" />
+    			</bean>
+    		</list>
+    	</property>
+    </bean>
+    	 
+    	 
+    <!-- 国际化资源文件 
+	<bean id="messageSource" class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+		<property name="useCodeAsDefaultMessage" value="false" />
+		<property name="defaultEncoding" value="UTF-8" />
+		<property name="cacheSeconds" value="3600" />
+		<property name="basenames">
+			<list>
+				<value>classpath:com/resoureces/validation</value>
+			</list>
+		</property>
+	</bean>
+	-->
+	<!-- 国际化 
+	<bean id="localeResolver" class="org.springframework.web.servlet.i18n.SessionLocaleResolver">
+		<property name="defaultLocale" value="zh_CN" />
+	</bean>
+	-->
+	<!-- 动态修改Locale, 例如http://localhost:8080?language=en 
+	<mvc:interceptors>
+		<bean class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor">
+			<property name="paramName" value="language" />
+		</bean>
+	</mvc:interceptors>	 
+   	-->
+	
+</beans>

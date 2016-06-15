@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xmlns:context="http://www.springframework.org/schema/context" 
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:cache="http://www.springframework.org/schema/cache" 
+    xmlns:p="http://www.springframework.org/schema/p"
+    xsi:schemaLocation="
+    	http://www.springframework.org/schema/beans 
+       	http://www.springframework.org/schema/beans/spring-beans.xsd
+       	http://www.springframework.org/schema/aop
+       	http://www.springframework.org/schema/aop/spring-aop.xsd
+       	http://www.springframework.org/schema/context
+       	http://www.springframework.org/schema/context/spring-context.xsd
+       	http://www.springframework.org/schema/tx
+       	http://www.springframework.org/schema/tx/spring-tx.xsd
+       	http://www.springframework.org/schema/cache 
+       	http://www.springframework.org/schema/cache/spring-cache.xsd"
+       	>
+    
+    <!-- 配置JNDI数据源 -->
+    <bean id="dataSource2pdbtrs" class="org.springframework.jndi.JndiObjectFactoryBean">
+    	<property name="jndiName" value="java:comp/env/dataSource/pdb_trs" ></property>
+    </bean>
+    <bean id="dataSource2pdbgds" class="org.springframework.jndi.JndiObjectFactoryBean">
+    	<property name="jndiName" value="java:comp/env/dataSource/pdb_gds" ></property>
+    </bean>
+    <bean id="dataSource" class="com.flight.trs.datasource.DynamicDataSource">
+    	<property name="targetDataSources">
+			<map key-type="java.lang.String">
+				<entry key="dataSource2pdbtrs" value-ref="dataSource2pdbtrs" />
+				<entry key="dataSource2pdbgds" value-ref="dataSource2pdbgds" />
+			</map>
+		</property>
+		<property name="defaultTargetDataSource" ref="dataSource2pdbtrs" />
+    </bean>
+
+    <!-- 配置sessionFactory -->
+    <bean id="sessionFactory"
+        class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+        
+        <property name="dataSource" ref="dataSource" />
+    	<property name="hibernateProperties">
+        	<props>
+            	<prop key="hibernate.dialect">org.hibernate.dialect.Oracle12cDialect</prop>
+            	<prop key="hibernate.show_sql">false</prop>
+            	<!-- org.hibernate.cache.ehcache.EhCacheRegionFactory -->
+            	<!-- ehcache cache -->
+        		<prop key="hibernate.cache.region.factory_class">
+        			org.hibernate.cache.ehcache.SingletonEhCacheRegionFactory
+        		</prop>
+        		<prop key="hibernate.cache.use_second_level_cache">true</prop>
+        		<prop key="hibernate.cache.use_query_cache">false</prop>
+        		<prop key="hibernate.cache.use_structured_entries">true</prop>
+        		
+        		<prop key="hibernate.current_session_context_class">org.springframework.orm.hibernate5.SpringSessionContext</prop>
+            	
+            	<prop key="hibernate.transaction.coordinator_class">jdbc</prop>
+        	</props>
+    	</property>
+    	<property name="packagesToScan">
+    		<list>
+    			<value>com.flight.trs.model.entity</value>
+    		</list> 		
+    	</property>
+    </bean>
+    
+    <bean id="hibernateTemplate" 
+    	class="org.springframework.orm.hibernate5.HibernateTemplate">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+    
+    <!-- 数据源切换 -->
+    <bean id="dataSourceContextHolder" class="com.flight.trs.datasource.DataSourceContextHolder" />
+  	
+  	<aop:aspectj-autoproxy proxy-target-class="true">
+  		<aop:include name="dataSourceContextHolder"></aop:include>
+  	</aop:aspectj-autoproxy>
+  	
+    <!-- 事务管理器，使用HibernateTransactionManager -->
+    <bean id="transactionManager" 
+    	class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean>
+    
+    <!-- 注解实现事务管理  -->
+    <tx:annotation-driven transaction-manager="transactionManager" proxy-target-class="true" />
+    
+</beans>
